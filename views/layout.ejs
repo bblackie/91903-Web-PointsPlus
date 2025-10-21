@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>PointsPlus</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/png" href="/images/favicon.png">
+    <link rel="stylesheet" href="/css/main.css" />
+  </head>
+
+  <body>
+    <div class="page-wrapper">
+      <nav class="topnav">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/admin">Admin</a></li>
+          <li><a href="/form">Form</a></li>
+          <li><a href="/graph">Graph</a></li>
+          <li><a href="/results">Results</a></li>
+        </ul>
+      </nav>
+
+      <main class="main-content">
+        <%- body %>
+      </main>
+
+      <footer class="footer">
+        &copy; <%= new Date().getFullYear() %> PointsPlus
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="/js/script.js"></script>
+  </body>
+</html>

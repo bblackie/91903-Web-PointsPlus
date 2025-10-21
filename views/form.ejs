@@ -1,0 +1,40 @@
+<div id="main-container">
+  
+  <form id="dataForm" action="/submit" method="POST">
+    <h2>Enter Results</h2>
+
+    <label>Event Name:
+      <select name="event_name" required maxlength="50">
+        <option value="">Select Event</option>
+        <% events.forEach(function(event) { %>
+          <option value="<%= event.event %>">
+            <%= event.event %><% if (event.event_date) { %> (<%= new Date(event.event_date).toLocaleDateString() %>)<% } %>
+          </option>
+        <% }); %>
+      </select>
+    </label>
+
+    <label>Event Date:
+      <input type="date" name="event_date" placeholder="Event Date (optional)">
+    </label>
+
+    <% houses.forEach(function(house, idx) { %>
+      <div class="place-group">
+        <h3><%= idx+1 %><%= (idx+1)==1?'st':(idx+1)==2?'nd':(idx+1)==3?'rd':'th' %> Place</h3>
+        <div class="place-inputs">
+          <select name="house_<%= idx+1 %>" required maxlength="50">
+            <option value="">Select House</option>
+            <% houses.forEach(function(h) { %>
+              <option value="<%= h.house %>"><%= h.house %></option>
+            <% }); %>
+          </select>
+          <input type="number" name="points_<%= idx+1 %>" placeholder="Points" required min="0" max="1000">
+        </div>
+      </div>
+    <% }); %>
+
+    <input type="hidden" name="num_places" value="<%= houses.length %>">
+
+    <button type="submit">Submit Results</button>
+  </form>
+</div>

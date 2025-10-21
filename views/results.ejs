@@ -1,0 +1,205 @@
+<div id="main-container">
+   <h1><%= schoolName ? `${schoolName} House Points Competition` : 'House Points Competition' %></h1>
+    <div class="filter-container">
+    <div class="filter-row">
+      <div class="filter-group">
+        <label for="eventFilter">Filter by Event:</label>
+        <select id="eventFilter">
+          <option value="">All Events</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="houseFilter">Filter by House:</label>
+        <select id="houseFilter">
+          <option value="">All Houses</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="dateFilter">Filter by Date:</label>
+        <select id="dateFilter">
+          <option value="">All Dates</option>
+        </select>
+      </div>
+      <button class="clear-filters" onclick="clearFilters()">Clear Filters</button>
+    </div>
+  </div>
+
+  <div class="results-summary" id="resultsSummary">
+    Showing all results
+  </div>
+  <h2>House Results</h2>
+  <div class="table-container">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>House</th>
+          <th>Event</th>
+          <th>Date</th>
+          <th>Place</th>
+          <th>Points</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        <% results.forEach(function(row) { %>
+          <tr>
+            <td><%= row.house %></td>
+            <td><%= row.event %></td>
+            <td><%= row.event_date ? new Date(row.event_date).toLocaleDateString() : 'Not set' %></td>
+            <td>
+              <% if (row.Placing == 1) { %>1st<% } else if (row.Placing == 2) { %>2nd<% } else if (row.Placing == 3) { %>3rd<% } else { %><%= row.Placing %>th<% } %>
+            </td>
+            <td><%= row.Points %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script type="text/javascript">
+  window.resultsData = <%- JSON.stringify(results) %>;
+</script>
+
+<script>
+  const allResults = window.resultsData || [];
+  let filteredResults = allResults;
+
+  function getOrdinalSuffix(num) {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) return num + "st";
+    if (j === 2 && k !== 12) return num + "nd";
+    if (j === 3 && k !== 13) return num + "rd";
+    return num + "th";
+  }
+
+  function formatDate(dateString) {
+    if (!dateString) return 'Not set';
+    return new Date(dateString).toLocaleDateString();
+  }
+
+  function populateFilters() {
+    const eventFilter = document.getElementById('eventFilter');
+    const houseFilter = document.getElementById('houseFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    
+    const events = [...new Set(allResults.map(r => r.event))].sort();
+    const houses = [...new Set(allResults.map(r => r.house))].sort();
+    const dates = [...new Set(allResults.map(r => r.event_date).filter(d => d))].sort();
+    
+    eventFilter.innerHTML = '<option value="">All Events</option>';
+    houseFilter.innerHTML = '<option value="">All Houses</option>';
+    dateFilter.innerHTML = '<option value="">All Dates</option>';
+    
+    events.forEach(event => {
+      const option = document.createElement('option');
+      option.value = event;
+      option.textContent = event;
+      eventFilter.appendChild(option);
+    });
+    
+    houses.forEach(house => {
+      const option = document.createElement('option');
+      option.value = house;
+      option.textContent = house;
+      houseFilter.appendChild(option);
+    });
+    
+    dates.forEach(date => {
+      const option = document.createElement('option');
+      option.value = date;
+      option.textContent = formatDate(date);
+      dateFilter.appendChild(option);
+    });
+
+    if (allResults.some(r => !r.event_date)) {
+      const option = document.createElement('option');
+      option.value = 'null';
+      option.textContent = 'Not set';
+      dateFilter.appendChild(option);
+    }
+  }
+
+  function renderResults() {
+    const tbody = document.getElementById('resultsBody');
+    const summaryDiv = document.getElementById('resultsSummary');
+    
+    if (filteredResults.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="no-results">No results match your filters</td></tr>';
+      summaryDiv.textContent = 'No results found';
+      return;
+    }
+    
+    tbody.innerHTML = filteredResults.map(result => `
+      <tr>
+        <td>${result.house}</td>
+        <td>${result.event}</td>
+        <td>${formatDate(result.event_date)}</td>
+        <td>${getOrdinalSuffix(result.Placing)}</td>
+        <td>${result.Points}</td>
+      </tr>
+    `).join('');
+    
+    const eventFilter = document.getElementById('eventFilter').value;
+    const houseFilter = document.getElementById('houseFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    let summaryText = `Showing ${filteredResults.length} result${filteredResults.length !== 1 ? 's' : ''}`;
+    
+    const filters = [];
+    if (houseFilter) filters.push(houseFilter);
+    if (eventFilter) filters.push(eventFilter);
+    if (dateFilter) {
+      if (dateFilter === 'null') {
+        filters.push('events without dates');
+      } else {
+        filters.push(`events on ${formatDate(dateFilter)}`);
+      }
+    }
+    
+    if (filters.length > 0) {
+      summaryText += ` for ${filters.join(' in ')}`;
+    }
+    
+    summaryDiv.textContent = summaryText;
+  }
+
+  function applyFilters() {
+    const eventFilter = document.getElementById('eventFilter').value;
+    const houseFilter = document.getElementById('houseFilter').value;
+    const dateFilter = document.getElementById('dateFilter').value;
+    
+    filteredResults = allResults.filter(result => {
+      const matchesEvent = !eventFilter || result.event === eventFilter;
+      const matchesHouse = !houseFilter || result.house === houseFilter;
+      let matchesDate = true;
+      
+      if (dateFilter) {
+        if (dateFilter === 'null') {
+          matchesDate = !result.event_date;
+        } else {
+          matchesDate = result.event_date === dateFilter;
+        }
+      }
+      
+      return matchesEvent && matchesHouse && matchesDate;
+    });
+    
+    renderResults();
+  }
+
+  function clearFilters() {
+    document.getElementById('eventFilter').value = '';
+    document.getElementById('houseFilter').value = '';
+    document.getElementById('dateFilter').value = '';
+    filteredResults = allResults;
+    renderResults();
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    populateFilters();
+    
+    document.getElementById('eventFilter').addEventListener('change', applyFilters);
+    document.getElementById('houseFilter').addEventListener('change', applyFilters);
+    document.getElementById('dateFilter').addEventListener('change', applyFilters);
+  });
+</script>

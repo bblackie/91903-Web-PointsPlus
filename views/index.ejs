@@ -1,0 +1,30 @@
+<div id="main-container">
+  <div class="title-container">
+    <img src="images/Crest.jpg" id="crest-pic" alt="School Crest">
+    <div class="title-text">
+      <% if (schoolName) { %>
+        <h1><%= schoolName %></h1>
+        <h1>House Points Competition</h1>
+      <% } else { %>
+        <h1>House Points Competition</h1>
+      <% } %>
+    </div>
+  </div>
+
+  <div id="chart">
+    <canvas id="my-chart"></canvas>
+  </div>
+</div>
+
+<script>
+  const profile = document.getElementById("crest-pic");
+
+  window.addEventListener("DOMContentLoaded", () => {
+    try {
+      const storedImage = sessionStorage.getItem("crestImage");
+      if (storedImage) profile.src = storedImage;
+    } catch (e) {
+      console.error("Error loading crest from localStorage", e);
+    }
+  });
+</script>

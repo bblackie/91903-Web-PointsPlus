@@ -1,0 +1,249 @@
+<div id="main-container">
+  <h1>Administration Panel</h1>
+  
+  <form id="adminForm" action="/admin" method="POST">
+    <h2>Competition Setup</h2>
+
+    <div class="admin-section">
+      <h3>School Information</h3>
+      <div id="schoolField" class="field-group">
+        <label>School Name:
+          <input type="text" name="school_name[]" placeholder="School Name" required maxlength="50">
+        </label>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3>School Crest Image</h3>
+      <div class="field-group">
+        <p>By uploading an image, you allow the website to display the image</p>
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <img src="images/Crest.jpg" id="crest-pic" alt="School crest" style="width: 80px; height: auto; border: 2px solid #ddd; border-radius: 4px;">
+          <div>
+            <input type="file" id="input-file" accept="image/png, image/jpeg, image/jpg" style="display: none;">
+            <button type="button" id="upload-button">Upload New Crest Image</button>
+            <p style="margin: 5px 0 0 0; font-size: 0.9em; color: #666;">Upload a new school crest image (PNG, JPEG, JPG)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="admin-section chart-controls">
+      <h3>Chart Settings</h3>
+      <label>
+        <input type="checkbox" id="fixed-scale-toggle">
+      Enable Fixed Points Scale
+      </label>
+      <label>Fixed Points Scale Maximum Value:
+        <input type="number" id="y-axis-max" placeholder="e.g., 500">
+      </label>
+    </div>
+
+    <div class="admin-section">
+      <h3>Houses</h3>
+      <div id="housesField">
+        <div class="field-group">
+          <button type="button" class="delete-button" onclick="removeField(this)" title="Remove this house">×</button>
+          <label>House Details:</label>
+          <div class="house-inputs">
+            <input type="text" name="house_name[]" placeholder="House Name" required maxlength="50">
+            <input type="color" name="house_color[]" value="#000000" title="Pick house color">
+          </div>
+        </div>
+      </div>
+      <button type="button" class="add-button" onclick="addHouseField()">Add Another House</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>Events</h3>
+      <div id="eventsField">
+        <div class="field-group">
+          <button type="button" class="delete-button" onclick="removeField(this)" title="Remove this event">×</button>
+          <label>Event Name:
+            <input type="text" name="event_name[]" placeholder="Event Name" required maxlength="50">
+          </label>
+        </div>
+      </div>
+      <button type="button" class="add-button" onclick="addEventField()">Add Another Event</button>
+    </div>
+
+    <button type="submit">Save Configuration</button>
+  </form>
+
+  <div class="admin-section">
+    <h2>Current Results Management</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>House</th>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Place</th>
+            <th>Points</th>
+            <th>Delete</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (typeof results !== 'undefined' && results && results.length > 0) { %>
+            <% results.forEach(function(row) { %>
+              <tr>
+                <td><%= row.house %></td>
+                <td><%= row.event %></td>
+                <td><%= row.event_date ? new Date(row.event_date).toLocaleDateString() : 'Not set' %></td>
+                <td>
+                  <% if (row.Placing == 1) { %>1st<% } else if (row.Placing == 2) { %>2nd<% } else if (row.Placing == 3) { %>3rd<% } else { %><%= row.Placing %>th<% } %>
+                </td>
+                <td><%= row.Points %></td>
+                <td>
+                  <form action="/results/delete" method="POST" style="margin:0;">
+                    <input type="hidden" name="house" value="<%= row.house %>">
+                    <input type="hidden" name="event" value="<%= row.event %>">
+                    <input type="hidden" name="placing" value="<%= row.Placing %>">
+                    <button type="submit" onclick="return confirm('Delete this row?')" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8em;">Delete</button>
+                  </form>
+                </td>
+              </tr>
+            <% }); %>
+          <% } else { %>
+            <tr>
+              <td colspan="6" style="text-align: center; color: #666; font-style: italic; padding: 20px;">
+                No results found. Add some results using the form page.
+              </td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <form id="clearDbForm" action="/admin/clear-db" method="POST">
+    <h3>Warning</h3><br>
+    <p>This will permanently delete all competition data including results, events, and houses.</p><br>
+    <button type="submit" id="clearDbBtn">Empty Entire Database</button>
+  </form>
+</div>
+
+<script>
+  document.getElementById('clearDbBtn').addEventListener('click', (e) => {
+    if (!confirm('Are you sure you want to empty the entire database? This action cannot be undone!')) {
+      e.preventDefault();
+      return;
+    }
+  });
+</script>
+
+<script>
+    function addEventField() {
+        const eventsField = document.getElementById('eventsField');
+        const newField = document.createElement('div');
+        newField.className = 'field-group';
+        newField.innerHTML = `
+            <button type="button" class="delete-button" onclick="removeField(this)" title="Remove this event">×</button>
+            <label>Event Name:
+                <input type="text" name="event_name[]" placeholder="Event Name" required maxlength="50">
+            </label>
+        `;
+        eventsField.appendChild(newField);
+        updateLastRemainingClass('eventsField');
+    }
+    
+    function addHouseField() {
+        const housesField = document.getElementById('housesField');
+        const newField = document.createElement('div');
+        newField.className = 'field-group';
+        newField.innerHTML = `
+            <button type="button" class="delete-button" onclick="removeField(this)" title="Remove this house">×</button>
+            <label>House Details:</label>
+            <div class="house-inputs">
+                <input type="text" name="house_name[]" placeholder="House Name" required maxlength="50">
+                <input type="color" name="house_color[]" value="#000000" title="Pick house color">
+            </div>
+        `;
+        housesField.appendChild(newField);
+        updateLastRemainingClass('housesField');
+    }
+
+    function removeField(button) {
+        const fieldGroup = button.parentElement;
+        const container = fieldGroup.parentElement;
+        
+        if (container.children.length > 1) {
+            fieldGroup.remove();
+            updateLastRemainingClass(container.id);
+        }
+    }
+
+    function updateLastRemainingClass(containerId) {
+        const container = document.getElementById(containerId);
+        const fields = container.querySelectorAll('.field-group');
+        
+        fields.forEach(field => field.classList.remove('last-remaining'));
+        
+        if (fields.length === 1) {
+            fields[0].classList.add('last-remaining');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        updateLastRemainingClass('housesField');
+        updateLastRemainingClass('eventsField');
+    });
+</script>
+
+<script>
+  const fixedToggle = document.getElementById('fixed-scale-toggle');
+  const yAxisMaxInput = document.getElementById('y-axis-max');
+
+  let useFixedY = false;
+  let fixedYMax = '';
+
+  window.addEventListener('DOMContentLoaded', () => {
+    useFixedY = JSON.parse(localStorage.getItem('useFixedY') || 'false');
+    fixedYMax = localStorage.getItem('fixedYMax') || '';
+
+    fixedToggle.checked = useFixedY;
+    yAxisMaxInput.disabled = !useFixedY;
+    if (fixedYMax) yAxisMaxInput.value = fixedYMax;
+  });
+
+  fixedToggle.addEventListener('change', () => {
+    useFixedY = fixedToggle.checked;
+    localStorage.setItem('useFixedY', JSON.stringify(useFixedY));
+    yAxisMaxInput.disabled = !fixedToggle.checked;
+  });
+
+  yAxisMaxInput.addEventListener('input', () => {
+    fixedYMax = yAxisMaxInput.value;
+    localStorage.setItem('fixedYMax', fixedYMax);
+  });
+</script>
+
+<script>
+  document.getElementById("upload-button").addEventListener("click", () => {
+    document.getElementById("input-file").click();
+  });
+
+  const profile = document.getElementById("crest-pic");
+  const inputFile = document.getElementById("input-file");
+
+  window.addEventListener("DOMContentLoaded", () => {
+    const storedImage = sessionStorage.getItem("crestImage");
+    if (storedImage) {
+      profile.src = storedImage;
+    }
+  });
+
+  inputFile.addEventListener("change", () => {
+    const file = inputFile.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64Image = reader.result;
+      profile.src = base64Image;
+      sessionStorage.setItem("crestImage", base64Image);
+    };
+    reader.readAsDataURL(file);
+  });
+</script>
