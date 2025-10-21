@@ -20,6 +20,12 @@ app.set('view engine', 'ejs');
 const DB_FILE = path.join(__dirname, 'PointsPlus.db');
 const db = new sqlite3.Database(DB_FILE);
 
+// Express example
+app.get('/css/main.css', (req, res) => {
+  res.type('text/css');
+  res.sendFile(__dirname + '/css/main.css');
+});
+
 app.get('/', (req, res) => {
   res.render('home');
 });
